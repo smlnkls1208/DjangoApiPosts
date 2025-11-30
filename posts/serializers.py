@@ -31,3 +31,26 @@ class PostSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data['author'] = self.context['request'].user
         return super().create(validated_data)
+
+    def get_is_liked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return Like.objects.filter(user=request.user, post=obj).exists()
+        return False
+
+class CommentSerializer(serializers.ModelSerializer):
+    author = UserSerializer(read_only=True)
+    is_author = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Comment
+        fields = ['id', 'post', 'author', 'content', 'created_at', 'updated_at', 'is_author']
+        read_only_fields = ['author', 'post', 'created_at', 'updated_at']
+
+    def get_is_author(self, obj):
+        request = self.context.get('request')
+        return request and request.user == obj.author
+
+    def create(self, validated_data):
+        validated_data['author'] = self.context['request'].user
+        return super().create(validated_data)
