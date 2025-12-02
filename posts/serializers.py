@@ -32,11 +32,6 @@ class PostSerializer(serializers.ModelSerializer):
         validated_data['author'] = self.context['request'].user
         return super().create(validated_data)
 
-    def get_is_liked(self, obj):
-        request = self.context.get('request')
-        if request and request.user.is_authenticated:
-            return Like.objects.filter(user=request.user, post=obj).exists()
-        return False
 
 class CommentSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)

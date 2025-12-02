@@ -1,5 +1,5 @@
 from pathlib import Path
-import os
+import os       # ля доступа к переменным окружения
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 

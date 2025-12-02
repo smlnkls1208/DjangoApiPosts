@@ -1,41 +1,34 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, status
-from rest_framework.pagination import PageNumberPagination
 from .models import Post, Like
 from .serializers import PostSerializer
 from .permissions import IsOwnerOrReadOnly
 from rest_framework.views import APIView
 from rest_framework.response import Response
-
-class MainPagePagination(PageNumberPagination):
-    page_size = 10
-    page_size_query_param = 'page_size'
-    max_page_size = 20
+from .models import Comment
+from .serializers import CommentSerializer
 
 class PostListCreateView(generics.ListCreateAPIView):
     serializer_class = PostSerializer
     permission_classes = [permissions.IsAuthenticated]
-    pagination_class = MainPagePagination
 
     def get_queryset(self):
         return Post.objects.all().order_by('-created_at')
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+        serializer.save(author=self.request.user)        # автор при создании автоматически
 
 
 class PostDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
-    permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
-    lookup_field = 'id'
+    permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]        # проверка авторизации перед действием
+    lookup_field = 'id'     # поиск по этому полю
 
-from .models import Comment
-from .serializers import CommentSerializer
 
 class IsCommentOwnerOrReadOnly(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
-        if request.method in permissions.SAFE_METHODS:
+        if request.method in permissions.SAFE_METHODS:      # проверяем что можем делать с конкретным комментом
             return True
         return obj.author == request.user
 
@@ -45,16 +38,16 @@ class PostCommentsListView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        post_id = self.kwargs['post_id']
+        post_id = self.kwargs['post_id']            # из словаря достаем конкретный айди. комменты к посту с коккретным айди
         return Comment.objects.filter(post_id=post_id).order_by('created_at')
 
     def perform_create(self, serializer):
         post_id = self.kwargs['post_id']
-        post = get_object_or_404(Post, id=post_id)
-        serializer.save(author=self.request.user, post=post)
+        post = get_object_or_404(Post, id=post_id)   # если поста нет
+        serializer.save(author=self.request.user, post=post)   # если пост есть
 
     def get_serializer_context(self):
-        return {'request': self.request}
+        return {'request': self.request}    # для передачи контекста
 
 
 class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -74,7 +67,7 @@ class LikeToggleView(APIView):
         post = get_object_or_404(Post, id=post_id)
         user = request.user
 
-        like, created = Like.objects.get_or_create(post=post, user=user)
+        like, created = Like.objects.get_or_create(post=post, user=user)     # меняем счетчик
 
         if not created:
             like.delete()
