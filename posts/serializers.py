@@ -7,6 +7,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username', 'email']
 
+
 class PostSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     likes_count = serializers.IntegerField(read_only=True)
@@ -16,7 +17,7 @@ class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = [
-            'id', 'author', 'title', 'content',
+            'id', 'author', 'title', 'content', 'image',  # <-- image добавлено
             'created_at', 'updated_at',
             'likes_count', 'comments_count', 'is_liked'
         ]
